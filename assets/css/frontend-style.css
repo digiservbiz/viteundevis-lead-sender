@@ -1,0 +1,97 @@
+.vud-form {
+    max-width: 640px;
+    margin: 20px auto;
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.vud-form .form-group {
+    margin-bottom: 16px;
+}
+
+.vud-form .form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.vud-form .form-row > div {
+    flex: 1;
+}
+
+.vud-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.vud-form input[type="text"],
+.vud-form input[type="email"],
+.vud-form input[type="tel"],
+.vud-form input[type="number"],
+.vud-form select,
+.vud-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+.vud-form .vud-checkbox-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.vud-form .vud-checkbox-row label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vud-form .vud-hint {
+    font-size: 13px;
+    color: #666;
+    font-weight: normal;
+}
+
+.vud-form button {
+    background: #0073aa;
+    color: #fff;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.vud-form button:hover {
+    background: #005a87;
+}
+
+.vud-notice {
+    max-width: 640px;
+    margin: 20px auto;
+    padding: 14px 18px;
+    border-radius: 6px;
+}
+
+.vud-notice p {
+    margin: 4px 0;
+}
+
+.vud-notice-success {
+    background: #edf9ee;
+    border: 1px solid #46b450;
+    color: #235a26;
+}
+
+.vud-notice-error {
+    background: #fdeeee;
+    border: 1px solid #dc3232;
+    color: #7a1c1c;
+}
