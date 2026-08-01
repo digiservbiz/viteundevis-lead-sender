@@ -113,6 +113,58 @@ Running the generator again skips categories that already have a
 generated page, so it's safe to re-run for just the new categories you
 pick each time.
 
+### Building the shared design in Divi Theme Builder
+
+Rather than binding individual Divi modules to custom fields via Dynamic
+Content (which requires trusting Divi's field picker to discover our
+custom meta — not guaranteed across versions), this plugin renders the
+**entire page body as one shortcode**:
+
+```
+[vud_category_page_body]
+```
+
+It reads whichever page it's rendered on automatically (title, category,
+intro, FAQ) — so this one shortcode produces different content on every
+one of the 155 pages, even though you only set it up once. It includes:
+hero (title + subheading), intro text (if written), the lead form already
+locked to the right category, a static "Comment ça marche" trust section,
+FAQ (if written, as a simple accordion), and 6 random links to other
+category pages for internal linking.
+
+**Setup — one-time, in Divi 5:**
+
+1. Go to **Divi → Theme Builder**
+2. Click **Add New Template** → **Build New Template**
+3. Assign it to your generated category pages (see note below)
+4. In the new template, **leave Header and Footer alone** so the site's
+   normal global header/footer keep showing
+5. Click **Add Custom Body** → **Build Custom Body**
+6. Add a single **Code module** (or Text module), and paste
+   `[vud_category_page_body]` into it — nothing else needed
+7. Save and exit
+
+Don't also add a separate page-title/hero module or a "Post Content"
+module to the same template — this shortcode already renders its own
+`<h1>` and already includes the form, so either would duplicate content.
+
+**On assignment (step 3):** Divi lets you assign a template to "All
+Pages," to individually-picked pages, or to a taxonomy/category grouping
+depending on your Divi version. Check what your Template Settings popup
+actually offers — if it's individual-page selection only, you'll need to
+multi-select the generated pages there.
+
+### Writing the content
+
+Go to **ViteUnDevis → Contenu des pages** for a checklist of every
+generated page with its intro/FAQ completion status. Each page gets a
+starter draft (seeded from ViteUnDevis's own category data) marked
+`[À COMPLÉTER]` — replace those with real, unique writing before
+publishing. This is the single most important thing for these pages to
+actually rank; the shared Divi layout won't do that on its own. FAQ text
+should follow a `Q : question` / `R : answer` pattern, one pair per blank
+line, so the shortcode can parse it into an accordion.
+
 ## Installation
 
 1. Copy this whole folder into `wp-content/plugins/`.
@@ -165,6 +217,22 @@ phone-consent fields), both from ForumConstruire SARL.
 
 ## Changelog
 
+- **3.0** — Added `[vud_category_page_body]`: renders the entire page
+  body (hero, intro, locked lead form, trust section, FAQ accordion,
+  related-category links) from a single shortcode, reading whichever page
+  it's on automatically. Replaces the earlier per-module Divi Dynamic
+  Content approach — paste it once into one Code module in the Theme
+  Builder Custom Body, and it works across all 155 pages with no
+  per-page Divi setup and no dependency on Divi's field picker finding
+  our custom meta.
+- **2.9** — Added `vud_intro_text`/`vud_faq_text` as properly registered
+  post meta (with `show_in_rest`) on generated pages, so Divi 5's Dynamic
+  Content picker (and other block-based builders) can bind to them
+  directly. Added **ViteUnDevis → Contenu des pages**, a checklist screen
+  to write/track intro and FAQ text per page without opening Divi.
+  Page generator now leaves `post_content` as just the shortcode (for use
+  inside a Theme Builder "Post Content" module) instead of embedding
+  placeholder paragraphs directly in the content.
 - **2.8** — Fixed a real bug (confirmed live on 3devisgratuit.com):
   `cp_projet`/`ville_projet` were showing for *every* category, not just
   construction ones, because our own `.form-row { display: flex }` CSS

@@ -208,10 +208,18 @@ function vud_handle_generate_pages() {
         $title = sprintf('Devis %s : trouver des %s pour %s', $nom, $artisan, $texte);
         $slug  = 'devis-' . $s['slug'];
 
-        $content  = "<!-- wp:heading -->\n<h2>" . esc_html($title) . "</h2>\n<!-- /wp:heading -->\n\n";
-        $content .= "<!-- wp:paragraph -->\n<p>[À COMPLÉTER : rédigez ici 150 à 300 mots uniques décrivant " . esc_html($texte) . ", pourquoi passer par des " . esc_html($artisan) . " qualifiés, ce que ViteUnDevis apporte (3 devis gratuits, sans engagement), et toute question fréquente locale. Ne publiez pas cette page telle quelle.]</p>\n<!-- /wp:paragraph -->\n\n";
-        $content .= "<!-- wp:shortcode -->\n[vud_lead_form cat_id=\"" . esc_attr($cat_id) . "\"]\n<!-- /wp:shortcode -->\n\n";
-        $content .= "<!-- wp:paragraph -->\n<p>[À COMPLÉTER : ajoutez ici une FAQ ou des informations complémentaires propres à cette catégorie.]</p>\n<!-- /wp:paragraph -->";
+        // Post content is intentionally just the shortcode. If your Divi Theme
+        // Builder template includes a "Post Content" module, this is what
+        // renders there — the surrounding hero/FAQ/related-categories come
+        // from the shared template, reading the two meta fields below via
+        // Dynamic Content, so no one needs to open Divi to write copy.
+        $content = "<!-- wp:shortcode -->\n[vud_lead_form cat_id=\"" . esc_attr($cat_id) . "\"]\n<!-- /wp:shortcode -->";
+
+        $intro_draft = sprintf(
+            "[À COMPLÉTER — 150 à 300 mots uniques] Vous cherchez des %s pour %s ? Avec ViteUnDevis, recevez jusqu'à 3 devis gratuits et comparez sans engagement. [Ajoutez ici : ce qui rend cette catégorie spécifique, les points à vérifier chez un pro, une fourchette de prix indicative, un mot sur les délais habituels.]",
+            $artisan, $texte
+        );
+        $faq_draft = "[À COMPLÉTER — 4 à 6 questions/réponses propres à cette catégorie]\n\nQ : Combien coûte " . $texte . " ?\nR : [À COMPLÉTER]\n\nQ : Combien de temps faut-il pour recevoir des devis ?\nR : [À COMPLÉTER]\n\nQ : Faut-il un permis ou une autorisation pour ce type de travaux ?\nR : [À COMPLÉTER]";
 
         $post_id = wp_insert_post(array(
             'post_type'    => 'page',
@@ -223,6 +231,8 @@ function vud_handle_generate_pages() {
 
         if (!is_wp_error($post_id)) {
             update_post_meta($post_id, '_vud_generated_cat_id', $cat_id);
+            update_post_meta($post_id, 'vud_intro_text', $intro_draft);
+            update_post_meta($post_id, 'vud_faq_text', $faq_draft);
             $created++;
         }
     }
