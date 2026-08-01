@@ -95,6 +95,24 @@ work.
 Category IDs are the numbers on the left in the **Catégories de devis**
 list in Settings (e.g. `13|Electricité (Travaux électriques)` → `cat_id="13"`).
 
+### Bulk-creating the pages
+
+Go to **ViteUnDevis → Générer les pages**, tick the categories you want a
+landing page for, and click "Générer les pages sélectionnées". This
+creates one WordPress page per category, as a **draft**, with:
+
+- A title/slug following the same pattern ViteUnDevis uses on their own
+  category pages
+- The `[vud_lead_form cat_id="X"]` shortcode already inserted
+- `[À COMPLÉTER ...]` placeholder blocks marking exactly where real,
+  unique written content needs to go
+
+Nothing is published automatically — each draft needs a human pass to
+replace the placeholders with genuine content before you publish it.
+Running the generator again skips categories that already have a
+generated page, so it's safe to re-run for just the new categories you
+pick each time.
+
 ## Installation
 
 1. Copy this whole folder into `wp-content/plugins/`.
@@ -147,6 +165,11 @@ phone-consent fields), both from ForumConstruire SARL.
 
 ## Changelog
 
+- **2.7** — Added **ViteUnDevis → Générer les pages**: bulk-creates one
+  draft WordPress page per selected category, pre-filled with the
+  `[vud_lead_form cat_id="X"]` shortcode, a ViteUnDevis-style title, and
+  placeholder blocks marking where real content needs to be written.
+  Skips categories that already have a generated page on re-run.
 - **2.6** — `[vud_lead_form cat_id="13"]` now locks the category, for
   building one dedicated SEO landing page per category (mirroring
   ViteUnDevis's own one-URL-per-trade structure) instead of a single

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       ViteUnDevis Lead Sender
  * Description:       Collects project leads via a frontend form and submits them to the ViteUnDevis "dépôt de devis" API (v1.5/v1.6), with an admin dashboard, WP dashboard widget, CSV export, and an optional CRM/webhook hook.
- * Version:           2.6
+ * Version:           2.7
  * Requires PHP:      7.4
  * Text Domain:       vud
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
     exit; // No direct access.
 }
 
-define('VUD_VERSION', '2.6');
+define('VUD_VERSION', '2.7');
 define('VUD_DB_VERSION', '2'); // bump when the table schema changes
 define('VUD_PATH', plugin_dir_path(__FILE__));
 define('VUD_URL', plugin_dir_url(__FILE__));
@@ -22,6 +22,7 @@ require_once VUD_PATH . 'includes/frontend.php';
 require_once VUD_PATH . 'includes/dashboard.php';
 require_once VUD_PATH . 'includes/widget.php';
 require_once VUD_PATH . 'includes/notifications.php';
+require_once VUD_PATH . 'includes/page-generator.php';
 require_once VUD_PATH . 'includes/api-handler.php';
 
 /**
