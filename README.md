@@ -28,6 +28,23 @@ you have your own record independent of ViteUnDevis's system.
 - Keeps the category list (`cat_id` → name) admin-editable as plain text
   rather than hardcoded in code, since ViteUnDevis maintains that list
   separately as a CSV that changes over time.
+- Implements the mandatory phone-consent proof required by API v1.6
+  (`consent_date`, `consent_ip`, `consent_texte`, `consent_url`), per
+  loi n° 2025-594 — an unchecked-by-default checkbox, distinct from any
+  other consent, with an admin-editable consent text (single source of
+  truth used both on the form and in what's sent to the API) and an
+  optional privacy-policy link next to it.
+- Shows a summary widget right on the WordPress admin **Home** dashboard
+  (total/success/test/error counts, leads this week, last 5 leads) so you
+  don't have to visit a submenu to check in.
+- Every submission attempt — success, test, or failed — is always logged
+  locally first, independent of whatever ViteUnDevis's API returns; that's
+  your permanent copy of every lead generated from the site.
+- Optional email copy of each new lead, and an optional webhook URL that
+  POSTs every lead as JSON — works with Zapier/Make/n8n or most CRMs'
+  inbound-webhook endpoints today, without committing to one CRM. A
+  `vud_after_submission` PHP action hook is also fired for a future
+  custom/native CRM integration to hook into directly.
 
 ## Requirements
 
@@ -39,12 +56,14 @@ you have your own record independent of ViteUnDevis's system.
 
 ```
 viteundevis-lead-sender/
-├── viteundevis-lead-sender.php   # Plugin bootstrap, activation hook (creates DB table)
+├── viteundevis-lead-sender.php   # Plugin bootstrap, activation hook, versioned DB upgrades
 ├── includes/
 │   ├── settings.php               # Admin settings page, category list, field visibility
 │   ├── frontend.php                # [vud_lead_form] shortcode and form markup
 │   ├── api-handler.php             # Validates, calls the ViteUnDevis API, stores results
-│   └── dashboard.php                # Admin submissions list + CSV export
+│   ├── dashboard.php                # Admin submissions list + CSV export
+│   ├── widget.php                   # WP-admin Home dashboard summary widget
+│   └── notifications.php            # Email copy, webhook/CRM POST, action hook
 └── assets/css/frontend-style.css   # Public form styling
 ```
 
@@ -59,13 +78,19 @@ viteundevis-lead-sender/
      to go live.
    - Optionally set a "thank you" redirect URL, a callback URL, and your
      `site_name`.
-   - **Replace the sample category list** in the "Catégories de devis" box
-     with the full list from ViteUnDevis (they provide this as a CSV — one
-     `id|Nom de la catégorie` per line). The sample list is just a few
-     entries to prove the form works out of the box.
+   - **Catégories de devis** ships with the real, complete ViteUnDevis
+     list (155 categories) — no need to paste anything unless ViteUnDevis
+     sends you an updated CSV later.
    - Check any optional fields (société, budget, surface, permis, etc.) you
      want visible on the public form. The fields the API always requires are
      shown automatically.
+   - Under **Consentement au démarchage téléphonique**, review/edit the
+     consent checkbox text (must accurately name who will contact the
+     visitor) and set a privacy-policy URL. This is legally required
+     (loi n° 2025-594) and enforced by the API itself as of v1.6.
+   - Under **Notifications & CRM**, optionally turn on an email copy of
+     every lead, and/or set a webhook URL (Zapier/Make/n8n/CRM inbound
+     webhook) to receive every lead as JSON in real time.
 4. Place the shortcode `[vud_lead_form]` on any page or post.
 5. Check **ViteUnDevis → Demandes** to see submissions and export to CSV.
 
@@ -73,13 +98,11 @@ viteundevis-lead-sender/
 
 - At least one of phone / mobile is required, both client-side and
   server-side, per the API spec.
-- `cp_projet` / `ville_projet` are only strictly required by ViteUnDevis for
-  "construction" categories — this plugin sends them if filled in but
-  doesn't force them, since that construction-category flag isn't exposed in
-  the API doc's field list. If a submission errors out with code 004/005,
-  the visitor will see a friendly message and can retry with those fields
-  filled in — turn on those optional fields in Settings if you sell into
-  construction categories.
+- `cp_projet` / `ville_projet` are now shown and required automatically
+  only for the 5 categories ViteUnDevis flags as "construction" in their
+  official CSV — no more guessing. If ViteUnDevis adds/changes which
+  categories count as construction, update the comma-separated ID list
+  under **Catégories "construction"** in Settings.
 - No spam protection (honeypot/CAPTCHA/rate limiting) is included yet — add
   one before putting a public form live on a high-traffic site.
 - Not yet tested against the live API with a real key — verify a successful
@@ -90,5 +113,31 @@ viteundevis-lead-sender/
 
 ## API reference
 
-Built against ViteUnDevis's "API dépôt de devis v1.5" documentation
-(27 January 2025, ForumConstruire SARL).
+Built against ViteUnDevis's "API dépôt de devis" documentation — v1.5
+(27 January 2025) and updated for v1.6 (22 July 2026, adds mandatory
+phone-consent fields), both from ForumConstruire SARL.
+
+## Changelog
+
+- **2.5** — Added the WP-admin Home dashboard widget (summary counts +
+  last 5 leads), an optional email copy per lead, an optional webhook URL
+  (JSON POST per lead) for no-code CRM/automation integration, and a
+  `vud_after_submission` action hook for future custom CRM code. Fixed
+  `VUD_VERSION` having silently drifted from the plugin header since 2.1.
+- **2.3** — Replaced the sample category list with the real, complete list
+  from ViteUnDevis (155 categories, shipped as the default so it works
+  out of the box). Construction categories are now auto-detected from the
+  official CSV's flag rather than guessed: `cp_projet`/`ville_projet`
+  appear on the form and become required automatically only when the
+  visitor selects one of the 5 categories ViteUnDevis marks as
+  "construction" (currently: Architecte - construction de maison,
+  Maître d'oeuvre, Constructeur de maisons, Construction, Maison bois).
+  Enforced both client-side (JS) and server-side.
+- **2.2** — Split the frontend form into a 3-step wizard (coordonnées →
+  projet → consentement/envoi) with a progress indicator, to reduce the
+  perceived length. Still a single submission, no backend changes.
+- **2.1** — Added support for API v1.6's mandatory consent_date /
+  consent_ip / consent_texte / consent_url fields and the corresponding
+  frontend consent checkbox, plus error codes 110–112.
+- **2.0** — Initial full build: form, API integration, admin dashboard,
+  CSV export.

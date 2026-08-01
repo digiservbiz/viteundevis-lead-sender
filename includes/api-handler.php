@@ -29,8 +29,28 @@ function vud_error_messages() {
         '107' => "Téléphone invalide (fixe ou mobile requis).",
         '108' => "Délais du projet invalide.",
         '109' => "Cette demande a déjà été envoyée récemment.",
+        '110' => "Merci d'accepter d'être contacté(e) par téléphone (consentement requis).",
+        '111' => "Une erreur technique a empêché l'enregistrement du consentement, merci de réessayer.",
+        '112' => "Le consentement au contact téléphonique est incomplet, merci de réessayer.",
         '888' => "Une erreur est survenue, merci de contacter contact@viteundevis.com.",
     );
+}
+
+/**
+ * Best-effort real client IP, for the consent_ip proof field. Falls back to
+ * REMOTE_ADDR since X-Forwarded-For can be spoofed by the client if there's
+ * no proxy/CDN in front of the site to set it authoritatively.
+ */
+function vud_get_client_ip() {
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) { // Cloudflare
+        $ip = wp_unslash($_SERVER['HTTP_CF_CONNECTING_IP']);
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $parts = explode(',', wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
+        $ip = trim($parts[0]);
+    } else {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? wp_unslash($_SERVER['REMOTE_ADDR']) : '';
+    }
+    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
 }
 
 add_action('admin_post_vud_submit_lead', 'vud_handle_submission');
@@ -76,6 +96,11 @@ function vud_handle_submission() {
     if ($f('tp') === '')           $errors[] = 'Merci de préciser le type de personne.';
     if ($f('delais') === '')       $errors[] = 'Merci de préciser les délais du projet.';
     if ($description === '')       $errors[] = 'La description du projet est requise.';
+    if (in_array((int) $f('cat_id'), vud_get_construction_category_ids(), true)) {
+        if ($f('cp_projet') === '')    $errors[] = 'Le code postal du projet est requis pour cette catégorie.';
+        if ($f('ville_projet') === '') $errors[] = 'La ville du projet est requise pour cette catégorie.';
+    }
+    if (empty($_POST['vud_consent'])) $errors[] = "Merci d'accepter d'être contacté(e) par téléphone pour valider votre demande.";
 
     if (!empty($errors)) {
         vud_redirect_with_notice($redirect_back, 'error', $errors);
@@ -112,6 +137,11 @@ function vud_handle_submission() {
         'description'  => $description,
         'format_return'=> 'json',
         'site_name'    => get_option('vud_site_name', ''),
+        // --- Preuve de consentement au démarchage téléphonique (obligatoire depuis l'API v1.6) ---
+        'consent_date'  => time(),
+        'consent_ip'    => vud_get_client_ip(),
+        'consent_texte' => vud_get_consent_text(),
+        'consent_url'   => $redirect_back,
         'key'          => $api_key,
     );
 
@@ -134,6 +164,7 @@ function vud_handle_submission() {
     $table = $wpdb->prefix . VUD_TABLE;
 
     if (is_wp_error($response)) {
+        $webhook_status = vud_maybe_send_webhook($post, 'error', null, $response->get_error_message());
         $wpdb->insert($table, array(
             'form_type'       => 'lead',
             'status'          => 'error',
@@ -142,7 +173,10 @@ function vud_handle_submission() {
             'email'           => $post['email'],
             'submitted_data'  => wp_json_encode($post),
             'response'        => $response->get_error_message(),
+            'webhook_status'  => $webhook_status,
         ));
+        do_action('vud_after_submission', $post, 'error', null, $response->get_error_message());
+        vud_maybe_send_email_notification($post, 'error', null);
         vud_redirect_with_notice($redirect_back, 'error', array("Impossible de contacter ViteUnDevis pour le moment, merci de réessayer plus tard."));
     }
 
@@ -160,17 +194,24 @@ function vud_handle_submission() {
     $is_success = ($first_code === '200');
 
     $devis_id = $is_success && isset($data['devis_data']['devis_id']) ? $data['devis_data']['devis_id'] : null;
+    $status   = $is_success ? ($test_mode ? 'test' : 'success') : 'error';
+
+    $webhook_status = vud_maybe_send_webhook($post, $status, $devis_id, $body);
 
     $wpdb->insert($table, array(
         'form_type'      => 'lead',
-        'status'         => $is_success ? ($test_mode ? 'test' : 'success') : 'error',
+        'status'         => $status,
         'devis_id'       => $devis_id,
         'cat_id'         => $post['cat_id'],
         'nom'            => $post['nom'],
         'email'          => $post['email'],
         'submitted_data' => wp_json_encode($post),
         'response'       => $body,
+        'webhook_status' => $webhook_status,
     ));
+
+    do_action('vud_after_submission', $post, $status, $devis_id, $body);
+    vud_maybe_send_email_notification($post, $status, $devis_id);
 
     if ($is_success) {
         $redirect_url = get_option('vud_redirect_url', '');

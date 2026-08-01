@@ -73,6 +73,118 @@
     background: #005a87;
 }
 
+.vud-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.vud-progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    color: #999;
+    font-size: 13px;
+}
+
+.vud-progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 60%;
+    width: 80%;
+    height: 2px;
+    background: #e2e6e9;
+    z-index: 0;
+}
+
+.vud-progress-step.is-done:not(:last-child)::after {
+    background: #0073aa;
+}
+
+.vud-progress-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e2e6e9;
+    color: #666;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 4px;
+}
+
+.vud-progress-step.is-active .vud-progress-dot {
+    background: #0073aa;
+    color: #fff;
+}
+
+.vud-progress-step.is-done .vud-progress-dot {
+    background: #46b450;
+    color: #fff;
+}
+
+.vud-progress-text {
+    display: block;
+}
+
+.vud-step-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.vud-btn-prev {
+    background: transparent;
+    color: #0073aa;
+    border: 1px solid #0073aa;
+    padding: 12px 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.vud-btn-prev:hover {
+    background: #f0f6fa;
+}
+
+.vud-btn-next {
+    background: #0073aa;
+    color: #fff;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.vud-btn-next:hover {
+    background: #005a87;
+}
+
+.vud-consent-group {
+    background: #f7f9fa;
+    border: 1px solid #e2e6e9;
+    border-radius: 6px;
+    padding: 14px;
+}
+
+.vud-consent-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-weight: normal;
+}
+
+.vud-consent-label input[type="checkbox"] {
+    width: auto;
+    margin-top: 3px;
+}
+
 .vud-notice {
     max-width: 640px;
     margin: 20px auto;

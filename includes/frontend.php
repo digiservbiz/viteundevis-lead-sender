@@ -47,6 +47,20 @@ function vud_lead_form_shortcode() {
         <input type="hidden" name="action" value="vud_submit_lead">
         <input type="hidden" name="vud_redirect_back" value="<?php echo esc_url(get_permalink() ?: home_url('/')); ?>">
 
+        <div class="vud-progress">
+            <div class="vud-progress-step is-active" data-step-label="1">
+                <span class="vud-progress-dot">1</span><span class="vud-progress-text">Coordonnées</span>
+            </div>
+            <div class="vud-progress-step" data-step-label="2">
+                <span class="vud-progress-dot">2</span><span class="vud-progress-text">Votre projet</span>
+            </div>
+            <div class="vud-progress-step" data-step-label="3">
+                <span class="vud-progress-dot">3</span><span class="vud-progress-text">Envoi</span>
+            </div>
+        </div>
+
+        <div class="vud-step" data-step="1">
+
         <div class="form-group">
             <label for="vud_nom">Nom *</label>
             <input type="text" id="vud_nom" name="nom" required>
@@ -104,30 +118,33 @@ function vud_lead_form_shortcode() {
             </div>
         </div>
 
-        <?php if ($show('cp_projet') || $show('ville_projet')): ?>
-        <div class="form-group form-row">
-            <?php if ($show('cp_projet')): ?>
-            <div>
-                <label for="vud_cp_projet">Code postal du projet</label>
-                <input type="text" id="vud_cp_projet" name="cp_projet" maxlength="5">
-            </div>
-            <?php endif; ?>
-            <?php if ($show('ville_projet')): ?>
-            <div>
-                <label for="vud_ville_projet">Ville du projet</label>
-                <input type="text" id="vud_ville_projet" name="ville_projet">
-            </div>
-            <?php endif; ?>
-        </div>
-        <p class="vud-hint">Obligatoire uniquement pour les catégories de construction.</p>
-        <?php endif; ?>
-
         <?php if ($show('pays')): ?>
         <div class="form-group">
             <label for="vud_pays">Pays (code ISO, ex: FR)</label>
             <input type="text" id="vud_pays" name="pays" maxlength="2" placeholder="FR">
         </div>
         <?php endif; ?>
+
+        <div class="vud-step-nav">
+            <span></span>
+            <button type="button" class="vud-btn-next">Suivant &rarr;</button>
+        </div>
+        </div><!-- /step 1 -->
+
+        <div class="vud-step" data-step="2" hidden>
+
+        <?php $construction_ids = vud_get_construction_category_ids(); ?>
+        <div class="form-group form-row" id="vud-construction-fields" hidden>
+            <div>
+                <label for="vud_cp_projet">Code postal du projet *</label>
+                <input type="text" id="vud_cp_projet" name="cp_projet" maxlength="5">
+            </div>
+            <div>
+                <label for="vud_ville_projet">Ville du projet *</label>
+                <input type="text" id="vud_ville_projet" name="ville_projet">
+            </div>
+        </div>
+        <p class="vud-hint" id="vud-construction-hint" hidden>Obligatoire pour cette catégorie de travaux.</p>
 
         <div class="form-group">
             <label for="vud_cat_id">Type de projet *</label>
@@ -233,13 +250,106 @@ function vud_lead_form_shortcode() {
         </div>
         <?php endif; ?>
 
-        <button type="submit">Envoyer ma demande de devis</button>
+        <div class="vud-step-nav">
+            <button type="button" class="vud-btn-prev">&larr; Précédent</button>
+            <button type="button" class="vud-btn-next">Suivant &rarr;</button>
+        </div>
+        </div><!-- /step 2 -->
+
+        <div class="vud-step" data-step="3" hidden>
+
+        <div class="form-group vud-consent-group">
+            <label class="vud-consent-label">
+                <input type="checkbox" id="vud_consent" name="vud_consent" value="1" required>
+                <?php echo esc_html(vud_get_consent_text()); ?>
+            </label>
+            <?php $privacy_url = get_option('vud_privacy_url', ''); ?>
+            <?php if ($privacy_url): ?>
+                <p class="vud-hint"><a href="<?php echo esc_url($privacy_url); ?>" target="_blank" rel="noopener">Politique de confidentialité</a></p>
+            <?php endif; ?>
+        </div>
+
+        <div class="vud-step-nav">
+            <button type="button" class="vud-btn-prev">&larr; Précédent</button>
+            <button type="submit">Envoyer ma demande de devis</button>
+        </div>
+        </div><!-- /step 3 -->
     </form>
 
     <script>
     (function () {
+        var VUD_CONSTRUCTION_IDS = <?php echo wp_json_encode(array_values($construction_ids)); ?>;
         var form = document.getElementById('vud-lead-form');
         if (!form) return;
+
+        var catSelect = form.querySelector('[name="cat_id"]');
+        var constructionBox = document.getElementById('vud-construction-fields');
+        var constructionHint = document.getElementById('vud-construction-hint');
+        var cpProjet = form.querySelector('[name="cp_projet"]');
+        var villeProjet = form.querySelector('[name="ville_projet"]');
+
+        function updateConstructionFields() {
+            var isConstruction = catSelect && VUD_CONSTRUCTION_IDS.indexOf(parseInt(catSelect.value, 10)) !== -1;
+            constructionBox.hidden = !isConstruction;
+            constructionHint.hidden = !isConstruction;
+            if (cpProjet) cpProjet.required = isConstruction;
+            if (villeProjet) villeProjet.required = isConstruction;
+        }
+        if (catSelect) {
+            catSelect.addEventListener('change', updateConstructionFields);
+            updateConstructionFields();
+        }
+
+        var steps = Array.prototype.slice.call(form.querySelectorAll('.vud-step'));
+        var progressSteps = Array.prototype.slice.call(form.querySelectorAll('.vud-progress-step'));
+        var current = 1;
+
+        function fieldsIn(stepEl) {
+            return Array.prototype.slice.call(stepEl.querySelectorAll('input, select, textarea'));
+        }
+
+        function validateStep(n) {
+            var stepEl = form.querySelector('.vud-step[data-step="' + n + '"]');
+            var ok = true;
+            fieldsIn(stepEl).forEach(function (el) {
+                if (!el.reportValidity()) ok = false;
+            });
+            if (n === 1 && ok) {
+                var tel = form.querySelector('[name="tel"]');
+                var mobile = form.querySelector('[name="mobile"]');
+                var telVal = tel ? tel.value.trim() : '';
+                var mobileVal = mobile ? mobile.value.trim() : '';
+                if (!telVal && !mobileVal) {
+                    ok = false;
+                    alert('Merci de renseigner au moins un numéro de téléphone (fixe ou mobile).');
+                }
+            }
+            return ok;
+        }
+
+        function goTo(n) {
+            steps.forEach(function (el) {
+                el.hidden = (parseInt(el.dataset.step, 10) !== n);
+            });
+            progressSteps.forEach(function (el, i) {
+                el.classList.toggle('is-active', i === n - 1);
+                el.classList.toggle('is-done', i < n - 1);
+            });
+            current = n;
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        form.querySelectorAll('.vud-btn-next').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (validateStep(current)) goTo(current + 1);
+            });
+        });
+        form.querySelectorAll('.vud-btn-prev').forEach(function (btn) {
+            btn.addEventListener('click', function () { goTo(current - 1); });
+        });
+
+        // Safety net: hidden required fields are excluded from native validation,
+        // but re-check tel/mobile by value in case someone submits via Enter key.
         form.addEventListener('submit', function (e) {
             var tel = form.querySelector('[name="tel"]');
             var mobile = form.querySelector('[name="mobile"]');
@@ -247,6 +357,7 @@ function vud_lead_form_shortcode() {
             var mobileVal = mobile ? mobile.value.trim() : '';
             if (!telVal && !mobileVal) {
                 e.preventDefault();
+                goTo(1);
                 alert('Merci de renseigner au moins un numéro de téléphone (fixe ou mobile).');
             }
         });

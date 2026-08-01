@@ -16,7 +16,7 @@ function vud_export_csv() {
 
     global $wpdb;
     $table = $wpdb->prefix . VUD_TABLE;
-    $rows = $wpdb->get_results("SELECT id, submission_time, status, devis_id, cat_id, nom, email, submitted_data FROM $table ORDER BY submission_time DESC", ARRAY_A);
+    $rows = $wpdb->get_results("SELECT id, submission_time, status, devis_id, cat_id, nom, email, submitted_data, webhook_status FROM $table ORDER BY submission_time DESC", ARRAY_A);
 
     nocache_headers();
     header('Content-Type: text/csv; charset=utf-8');
@@ -24,7 +24,7 @@ function vud_export_csv() {
 
     $out = fopen('php://output', 'w');
     fputs($out, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel.
-    fputcsv($out, array('ID', 'Date', 'Statut', 'Devis ID', 'Catégorie', 'Nom', 'Email', 'Téléphone', 'Ville', 'Description'));
+    fputcsv($out, array('ID', 'Date', 'Statut', 'Devis ID', 'Catégorie', 'Nom', 'Email', 'Téléphone', 'Ville', 'Description', 'Webhook'));
 
     foreach ($rows as $row) {
         $data = json_decode($row['submitted_data'], true) ?: array();
@@ -39,6 +39,7 @@ function vud_export_csv() {
             isset($data['tel']) ? $data['tel'] : '',
             isset($data['ville']) ? $data['ville'] : '',
             isset($data['description']) ? $data['description'] : '',
+            $row['webhook_status'] ?: '—',
         ));
     }
     fclose($out);
@@ -109,6 +110,9 @@ function vud_dashboard_page_html() {
                                 <p><strong>Téléphone:</strong> <?php echo esc_html($data['tel'] ?? ''); ?> <?php echo !empty($data['mobile']) ? '/ ' . esc_html($data['mobile']) : ''; ?></p>
                                 <p><strong>Ville:</strong> <?php echo esc_html($data['ville'] ?? ''); ?></p>
                                 <p><strong>Description:</strong> <?php echo esc_html($data['description'] ?? ''); ?></p>
+                                <?php if (!empty($row->webhook_status)): ?>
+                                    <p><strong>Webhook/CRM:</strong> <?php echo esc_html(ucfirst($row->webhook_status)); ?></p>
+                                <?php endif; ?>
                                 <?php if ($row->status === 'error'): ?>
                                     <p><strong>Réponse API:</strong> <code><?php echo esc_html($row->response); ?></code></p>
                                 <?php endif; ?>
