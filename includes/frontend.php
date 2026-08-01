@@ -7,9 +7,17 @@ function vud_enqueue_frontend() {
 add_action('wp_enqueue_scripts', 'vud_enqueue_frontend');
 
 /**
- * Shortcode: [vud_lead_form]
+ * Shortcode: [vud_lead_form] or [vud_lead_form cat_id="13"]
+ *
+ * The cat_id attribute pre-selects and locks the category, hiding the
+ * category dropdown. Meant for building one dedicated landing page per
+ * category (e.g. /devis-toiture/, /devis-electricite/) for SEO — each
+ * page gets its own URL/title/H1/content, with the form already scoped
+ * to that trade, instead of one generic page competing for every keyword.
  */
-function vud_lead_form_shortcode() {
+function vud_lead_form_shortcode($atts = array()) {
+    $atts = shortcode_atts(array('cat_id' => ''), $atts, 'vud_lead_form');
+
     $api_key = get_option('vud_api_key', '');
     if (empty($api_key)) {
         return current_user_can('manage_options')
@@ -20,6 +28,9 @@ function vud_lead_form_shortcode() {
     $visible = get_option('vud_settings', array());
     $show    = function ($field) use ($visible) { return !empty($visible[$field]); };
     $categories = vud_get_categories();
+
+    $locked_cat_id = absint($atts['cat_id']);
+    $has_locked_cat = ($locked_cat_id && isset($categories[$locked_cat_id]));
 
     // Success / error messages passed back after a redirect from the handler.
     $notice_html = '';
@@ -133,19 +144,29 @@ function vud_lead_form_shortcode() {
 
         <div class="vud-step" data-step="2" hidden>
 
-        <?php $construction_ids = vud_get_construction_category_ids(); ?>
-        <div class="form-group form-row" id="vud-construction-fields" hidden>
+        <?php
+        $construction_ids = vud_get_construction_category_ids();
+        $locked_is_construction = $has_locked_cat && in_array($locked_cat_id, $construction_ids, true);
+        ?>
+        <div class="form-group form-row" id="vud-construction-fields" <?php echo $locked_is_construction ? '' : 'hidden'; ?>>
             <div>
                 <label for="vud_cp_projet">Code postal du projet *</label>
-                <input type="text" id="vud_cp_projet" name="cp_projet" maxlength="5">
+                <input type="text" id="vud_cp_projet" name="cp_projet" maxlength="5" <?php echo $locked_is_construction ? 'required' : ''; ?>>
             </div>
             <div>
                 <label for="vud_ville_projet">Ville du projet *</label>
-                <input type="text" id="vud_ville_projet" name="ville_projet">
+                <input type="text" id="vud_ville_projet" name="ville_projet" <?php echo $locked_is_construction ? 'required' : ''; ?>>
             </div>
         </div>
-        <p class="vud-hint" id="vud-construction-hint" hidden>Obligatoire pour cette catégorie de travaux.</p>
+        <p class="vud-hint" id="vud-construction-hint" <?php echo $locked_is_construction ? '' : 'hidden'; ?>>Obligatoire pour cette catégorie de travaux.</p>
 
+        <?php if ($has_locked_cat): ?>
+        <div class="form-group">
+            <label>Type de projet</label>
+            <div class="vud-locked-category"><?php echo esc_html($categories[$locked_cat_id]); ?></div>
+            <input type="hidden" name="cat_id" value="<?php echo esc_attr($locked_cat_id); ?>">
+        </div>
+        <?php else: ?>
         <div class="form-group">
             <label for="vud_cat_id">Type de projet *</label>
             <select id="vud_cat_id" name="cat_id" required>
@@ -155,6 +176,7 @@ function vud_lead_form_shortcode() {
                 <?php endforeach; ?>
             </select>
         </div>
+        <?php endif; ?>
 
         <div class="form-group">
             <label for="vud_type_bien">Type de bien *</label>
@@ -299,6 +321,8 @@ function vud_lead_form_shortcode() {
             catSelect.addEventListener('change', updateConstructionFields);
             updateConstructionFields();
         }
+        // When the category is locked via [vud_lead_form cat_id="..."], there's no
+        // select to listen to — visibility/required were already set server-side.
 
         var steps = Array.prototype.slice.call(form.querySelectorAll('.vud-step'));
         var progressSteps = Array.prototype.slice.call(form.querySelectorAll('.vud-progress-step'));

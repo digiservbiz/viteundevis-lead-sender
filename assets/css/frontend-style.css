@@ -166,6 +166,15 @@
     background: #005a87;
 }
 
+.vud-locked-category {
+    padding: 10px 14px;
+    background: #f0f6fa;
+    border: 1px solid #cfe3ee;
+    border-radius: 4px;
+    font-weight: 600;
+    color: #0073aa;
+}
+
 .vud-consent-group {
     background: #f7f9fa;
     border: 1px solid #e2e6e9;

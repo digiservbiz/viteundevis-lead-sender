@@ -67,6 +67,34 @@ viteundevis-lead-sender/
 └── assets/css/frontend-style.css   # Public form styling
 ```
 
+## SEO: one landing page per category
+
+`[vud_lead_form]` alone shows the full category dropdown. To build one
+dedicated, indexable page per category — the same structural pattern
+ViteUnDevis itself uses (`/devis-0-13-...php`, `/devis-0-1-...php`, etc.,
+one URL per trade) — pass a `cat_id`:
+
+```
+[vud_lead_form cat_id="13"]
+```
+
+This locks the category (it's shown as a fixed label instead of a
+dropdown, sent as a hidden field) and, if that category is one of the 5
+flagged "construction" ones, automatically shows/requires
+`cp_projet`/`ville_projet` too — no JavaScript toggle needed since the
+category can't change.
+
+Create one WordPress page per category you want to rank for (e.g.
+`/devis-toiture/`, `/devis-electricite/`), each with its own unique
+`<title>`, H1, and real written content about that trade — then drop in
+the shortcode with that category's ID. A thin page that's just the form
+with no unique content around it won't rank; the form should sit inside
+genuine, category-specific content, the same way ViteUnDevis's own pages
+work.
+
+Category IDs are the numbers on the left in the **Catégories de devis**
+list in Settings (e.g. `13|Electricité (Travaux électriques)` → `cat_id="13"`).
+
 ## Installation
 
 1. Copy this whole folder into `wp-content/plugins/`.
@@ -119,6 +147,11 @@ phone-consent fields), both from ForumConstruire SARL.
 
 ## Changelog
 
+- **2.6** — `[vud_lead_form cat_id="13"]` now locks the category, for
+  building one dedicated SEO landing page per category (mirroring
+  ViteUnDevis's own one-URL-per-trade structure) instead of a single
+  generic page. Construction-field requirement is resolved server-side
+  when locked, no JS toggle needed.
 - **2.5** — Added the WP-admin Home dashboard widget (summary counts +
   last 5 leads), an optional email copy per lead, an optional webhook URL
   (JSON POST per lead) for no-code CRM/automation integration, and a
