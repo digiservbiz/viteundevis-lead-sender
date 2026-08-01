@@ -7,6 +7,10 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
+.vud-form [hidden] {
+    display: none !important;
+}
+
 .vud-form .form-group {
     margin-bottom: 16px;
 }

@@ -208,7 +208,7 @@ function vud_handle_generate_pages() {
         $title = sprintf('Devis %s : trouver des %s pour %s', $nom, $artisan, $texte);
         $slug  = 'devis-' . $s['slug'];
 
-        $content  = "<!-- wp:heading {\"level\":1} -->\n<h1>" . esc_html($title) . "</h1>\n<!-- /wp:heading -->\n\n";
+        $content  = "<!-- wp:heading -->\n<h2>" . esc_html($title) . "</h2>\n<!-- /wp:heading -->\n\n";
         $content .= "<!-- wp:paragraph -->\n<p>[À COMPLÉTER : rédigez ici 150 à 300 mots uniques décrivant " . esc_html($texte) . ", pourquoi passer par des " . esc_html($artisan) . " qualifiés, ce que ViteUnDevis apporte (3 devis gratuits, sans engagement), et toute question fréquente locale. Ne publiez pas cette page telle quelle.]</p>\n<!-- /wp:paragraph -->\n\n";
         $content .= "<!-- wp:shortcode -->\n[vud_lead_form cat_id=\"" . esc_attr($cat_id) . "\"]\n<!-- /wp:shortcode -->\n\n";
         $content .= "<!-- wp:paragraph -->\n<p>[À COMPLÉTER : ajoutez ici une FAQ ou des informations complémentaires propres à cette catégorie.]</p>\n<!-- /wp:paragraph -->";

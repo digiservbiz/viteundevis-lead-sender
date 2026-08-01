@@ -165,6 +165,17 @@ phone-consent fields), both from ForumConstruire SARL.
 
 ## Changelog
 
+- **2.8** — Fixed a real bug (confirmed live on 3devisgratuit.com):
+  `cp_projet`/`ville_projet` were showing for *every* category, not just
+  construction ones, because our own `.form-row { display: flex }` CSS
+  rule had the same specificity as the browser's `[hidden]` rule and won
+  by being declared later — silently overriding the hide. Added
+  `.vud-form [hidden] { display: none !important; }` so `hidden` always
+  wins regardless of what other display rules exist on the same element.
+  Also fixed the required-field asterisk showing even when the fields
+  weren't actually required, and changed the page generator's heading
+  from H1 to H2 (Divi/most themes already render an H1 from the page
+  title — the generator's own H1 was creating a duplicate).
 - **2.7** — Added **ViteUnDevis → Générer les pages**: bulk-creates one
   draft WordPress page per selected category, pre-filled with the
   `[vud_lead_form cat_id="X"]` shortcode, a ViteUnDevis-style title, and

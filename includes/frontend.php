@@ -150,11 +150,11 @@ function vud_lead_form_shortcode($atts = array()) {
         ?>
         <div class="form-group form-row" id="vud-construction-fields" <?php echo $locked_is_construction ? '' : 'hidden'; ?>>
             <div>
-                <label for="vud_cp_projet">Code postal du projet *</label>
+                <label for="vud_cp_projet">Code postal du projet<span class="vud-req-star" <?php echo $locked_is_construction ? '' : 'hidden'; ?>> *</span></label>
                 <input type="text" id="vud_cp_projet" name="cp_projet" maxlength="5" <?php echo $locked_is_construction ? 'required' : ''; ?>>
             </div>
             <div>
-                <label for="vud_ville_projet">Ville du projet *</label>
+                <label for="vud_ville_projet">Ville du projet<span class="vud-req-star" <?php echo $locked_is_construction ? '' : 'hidden'; ?>> *</span></label>
                 <input type="text" id="vud_ville_projet" name="ville_projet" <?php echo $locked_is_construction ? 'required' : ''; ?>>
             </div>
         </div>
@@ -316,6 +316,9 @@ function vud_lead_form_shortcode($atts = array()) {
             constructionHint.hidden = !isConstruction;
             if (cpProjet) cpProjet.required = isConstruction;
             if (villeProjet) villeProjet.required = isConstruction;
+            constructionBox.querySelectorAll('.vud-req-star').forEach(function (el) {
+                el.hidden = !isConstruction;
+            });
         }
         if (catSelect) {
             catSelect.addEventListener('change', updateConstructionFields);
